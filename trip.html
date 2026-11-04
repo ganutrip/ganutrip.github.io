@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🏝️ Trip Tracker · Redang & Beyond</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#006d9c">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Trip Tracker">
+<style>
+  :root{
+    --sea-deep:#006d9c; --sea:#00b4d8; --sea-light:#90e0ef;
+    --sand:#fefae0; --sand-dark:#f4e1b5; --coral:#ff6b6b;
+    --coral-dark:#e63946; --green:#2ecc71; --text:#023047;
+    --reef-purple:#7b2cbf; --reef-orange:#ff9f1c;
+    --bg-page:#e0f7fa; --bg-card:#fff; --bg-panel:#f8fdff;
+    --border-soft:#eef2f5;
+  }
+  body.dark{
+    --sea-deep:#00b4d8; --sea:#90e0ef; --text:#e0f7fa;
+    --bg-page:#0a1929; --bg-card:#0f2740; --bg-panel:#0d2035;
+    --border-soft:#1e3a5f; --sand:#0f2740; --sand-dark:#1e3a5f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'Segoe UI',system-ui,sans-serif;
+    background:
+      radial-gradient(circle at 15% 5%, #caf0f8 0%, transparent 45%),
+      radial-gradient(circle at 85% 95%, #ade8f4 0%, transparent 45%),
+      linear-gradient(180deg,var(--bg-page) 0%,#fefae0 100%);
+    color:var(--text); padding:12px; min-height:100vh;
+    position:relative; overflow-x:hidden; transition:background .3s,color .3s;
+    -webkit-tap-highlight-color:transparent;
+  }
+  body.dark{
+    background:
+      radial-gradient(circle at 15% 5%, #0f2740 0%, transparent 45%),
+      radial-gradient(circle at 85% 95%, #1e3a5f 0%, transparent 45%),
+      linear-gradient(180deg,#0a1929 0%,#0d2035 100%);
+  }
+
+  /* ===== BACKGROUND ===== */
+  .travel-bg,.ocean-bg{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden;}
+  .travel-icon,.fish{position:absolute;opacity:.25;animation:travelFloat linear infinite;}
+  @keyframes travelFloat{
+    0%{transform:translateX(-10vw) translateY(0) rotate(0);}
+    50%{transform:translateX(50vw) translateY(-40px) rotate(180deg);}
+    100%{transform:translateX(110vw) translateY(0) rotate(360deg);}
+  }
+  .travel-icon.rev,.fish.rev{animation-name:travelFloatRev;}
+  @keyframes travelFloatRev{
+    0%{transform:translateX(110vw) scaleX(-1) rotate(0);}
+    100%{transform:translateX(-10vw) scaleX(-1) rotate(360deg);}
+  }
+  .bg-plane{
+    position:absolute;font-size:2rem;opacity:.4;
+    animation:bgPlaneFly linear infinite;
+  }
+  @keyframes bgPlaneFly{
+    0%{left:-60px;top:10%;transform:rotate(0);}
+    50%{top:15%;transform:rotate(-5deg);}
+    100%{left:calc(100% + 60px);top:10%;transform:rotate(0);}
+  }
+  .bubble{position:absolute;bottom:-20px;border-radius:50%;background:rgba(255,255,255,.5);border:1px solid rgba(0,180,216,.4);animation:rise linear infinite;}
+  @keyframes rise{0%{transform:translateY(0);opacity:0;}10%{opacity:.7;}100%{transform:translateY(-105vh) translateX(30px);opacity:0;}}
+
+  .wrap{max-width:1200px;margin:0 auto;position:relative;z-index:1;}
+
+  /* ===== HEADER ===== */
+  header{
+    background:linear-gradient(135deg,var(--sea-deep),var(--sea) 60%,var(--reef-purple));
+    color:#fff; padding:20px 20px 24px;
+    border-radius:20px 20px 60px 20px;
+    box-shadow:0 10px 30px rgba(0,109,156,.4);
+    position:relative; overflow:hidden;
+  }
+  header::after{content:"";position:absolute;bottom:-30px;left:0;right:0;height:60px;background:radial-gradient(ellipse at 50% 0%, rgba(255,255,255,.35), transparent 70%);}
+  .shark{position:absolute;right:-10px;top:6px;font-size:64px;animation:sharkMove 6s ease-in-out infinite;opacity:.85;}
+  @keyframes sharkMove{0%,100%{transform:translateX(0) rotate(0);}50%{transform:translateX(-14px) rotate(-6deg);}}
+  header h1{font-size:1.4rem;letter-spacing:.4px;color:#fff;}
+  header p{opacity:.92;margin-top:4px;font-size:.85rem;color:#fff;}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .badge{background:rgba(255,255,255,.22);padding:4px 12px;border-radius:30px;font-size:.75rem;backdrop-filter:blur(4px);border:1px solid rgba(255,255,255,.3);color:#fff;transition:.2s;}
+  .badge.sync{background:rgba(46,204,113,.6);}
+  .badge.sync.offline{background:rgba(230,57,70,.6);}
+  .badge.sync.syncing{background:rgba(255,159,28,.6);}
+  button.badge{cursor:pointer;font-family:inherit;}
+
+  /* ===== CARDS ===== */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:14px 0;}
+  .card{background:var(--bg-card);border-radius:14px;padding:10px 12px;box-shadow:0 3px 10px rgba(0,0,0,.07);border-left:4px solid var(--sea);transition:.2s;}
+  .card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.1);}
+  .card .label{font-size:.68rem;text-transform:uppercase;letter-spacing:.8px;opacity:.7;}
+  .card .value{font-size:1.25rem;font-weight:700;margin-top:2px;color:var(--sea-deep);}
+  .card.reef{border-left-color:var(--reef-orange);}
+  .card.coral{border-left-color:var(--coral);}
+
+  /* ===== TOOLBAR ===== */
+  .toolbar{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0;align-items:center;}
+  .btn{border:none;padding:8px 12px;border-radius:12px;font-weight:600;cursor:pointer;font-size:.78rem;transition:.2s;display:inline-flex;align-items:center;gap:4px;font-family:inherit;}
+  .btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.13);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  .btn-primary{background:linear-gradient(135deg,var(--sea-deep),var(--sea));color:#fff;}
+  .btn-sand{background:var(--sand-dark);color:var(--text);}
+  .btn-danger{background:var(--coral);color:#fff;}
+  .btn-green{background:var(--green);color:#fff;}
+  .btn-purple{background:var(--reef-purple);color:#fff;}
+  .btn-sm{padding:4px 8px;font-size:.72rem;}
+  .search{flex:1;min-width:140px;padding:8px 12px;border-radius:12px;border:2px solid #caf0f8;font-size:.8rem;background:var(--bg-card);color:var(--text);font-family:inherit;}
+  .search:focus{outline:none;border-color:var(--sea);}
+
+  .section-title{font-size:1rem;margin:16px 0 8px;display:flex;align-items:center;gap:6px;font-weight:700;}
+  .info-box{background:#e0f7fa;border-left:4px solid var(--sea);padding:8px 12px;border-radius:10px;font-size:.76rem;margin-bottom:10px;line-height:1.5;}
+  body.dark .info-box{background:#1e3a5f;color:var(--text);}
+
+  /* ===== TABLE ===== */
+  .table-wrap{overflow-x:auto;border-radius:14px;box-shadow:0 4px 18px rgba(0,0,0,.09);background:var(--bg-card);}
+  table{border-collapse:collapse;width:100%;min-width:900px;font-size:.76rem;line-height:1.15;background:var(--bg-card);}
+  thead th{
+    background:linear-gradient(135deg,var(--sea-deep),var(--sea));
+    color:#fff;padding:6px 3px;font-weight:600;
+    position:sticky;top:0;white-space:nowrap;vertical-align:middle;font-size:.74rem;
+  }
+  thead th.bulan{background:linear-gradient(135deg,var(--reef-purple),#5a189a);padding:6px 2px;position:relative;}
+  tbody td{padding:4px 3px;text-align:center;border-bottom:1px solid var(--border-soft);}
+  tbody tr:nth-child(even){background:var(--bg-panel);}
+  tbody tr:hover{background:#e0f7fa;}
+  body.dark tbody tr:hover{background:#1e3a5f;}
+  td.name{text-align:left;font-weight:600;white-space:nowrap;padding-left:8px;font-size:.78rem;}
+  .tag{font-size:.62rem;padding:1px 6px;border-radius:14px;font-weight:600;}
+  .tag.dewasa{background:#caf0f8;color:#0077b6;}
+  .tag.kanak{background:#fff3cd;color:#b8860b;}
+  .money{font-weight:600;color:var(--sea-deep);font-size:.76rem;}
+  .baki{color:var(--coral-dark);font-weight:700;}
+  .lunas{color:var(--green);font-weight:700;}
+
+  .status{font-size:.95rem;cursor:pointer;user-select:none;padding:4px 2px;transition:all .15s;position:relative;border-radius:4px;}
+  .status:hover{background:#caf0f8 !important;}
+  body.dark .status:hover{background:#1e3a5f !important;}
+  .status.selected{background:#fff3cd !important;box-shadow:inset 0 0 0 2px var(--reef-orange);animation:blink .8s ease infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.6;}}
+  .status.pop{animation:pop .3s ease;}
+  @keyframes pop{0%{transform:scale(1);}50%{transform:scale(1.4);}100%{transform:scale(1);}}
+
+  .del,.edit{background:none;border:none;cursor:pointer;font-size:.82rem;opacity:.55;margin:0;padding:2px;border-radius:4px;transition:.15s;}
+  .del:hover,.edit:hover{opacity:1;}
+  .del.armed{background:#ffd6d6;opacity:1;}
+  .edit.armed{background:#fff3cd;opacity:1;}
+
+  tfoot td{background:var(--sand-dark);font-weight:700;padding:5px 3px;border-top:2px solid var(--sea);font-size:.76rem;color:var(--text);}
+  .legend{margin-top:8px;font-size:.72rem;opacity:.75;line-height:1.6;}
+  .legend span{margin-right:10px;}
+
+  /* ===== FOOTER ===== */
+  footer{text-align:center;margin:24px 0 8px;font-size:.76rem;opacity:.65;}
+  .wave{font-size:1.3rem;letter-spacing:4px;color:var(--sea);animation:waveMove 3s ease-in-out infinite;}
+  @keyframes waveMove{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+
+  /* ===== MODAL ===== */
+  .modal{display:none;position:fixed;inset:0;background:rgba(2,48,71,.6);z-index:99;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(3px);}
+  .modal.show{display:flex;animation:fadeIn .2s;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .modal-box{background:var(--bg-card);color:var(--text);border-radius:18px;padding:20px;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);animation:slideUp .25s;max-height:90vh;overflow-y:auto;}
+  @keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .modal-box h3{margin-bottom:12px;color:var(--sea-deep);font-size:1rem;}
+  .modal-box label{display:block;font-size:.78rem;margin:8px 0 3px;font-weight:600;}
+  .modal-box input,.modal-box select{width:100%;padding:8px;border:2px solid #caf0f8;border-radius:10px;font-size:.84rem;font-family:inherit;background:var(--bg-card);color:var(--text);}
+  .modal-box input:focus,.modal-box select:focus{outline:none;border-color:var(--sea);}
+  .modal-actions{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .modal-actions .btn{flex:1;justify-content:center;min-width:80px;}
+
+  /* ===== TOAST ===== */
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--sea-deep);color:#fff;padding:10px 20px;border-radius:30px;font-size:.8rem;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:.35s;z-index:1000;max-width:90vw;text-align:center;}
+  .toast.show{transform:translateX(-50%) translateY(0);}
+
+  /* ===== TABS ===== */
+  .tabs{display:flex;gap:6px;margin:14px 0;}
+  .tab{padding:8px 16px;border-radius:12px;border:2px solid #caf0f8;background:var(--bg-card);color:var(--text);cursor:pointer;font-size:.82rem;font-weight:600;transition:.2s;font-family:inherit;}
+  .tab.active{background:linear-gradient(135deg,var(--sea-deep),var(--sea));color:#fff;border-color:transparent;}
+
+  /* ===== TRIP CARD ===== */
+  .trip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:12px;}
+  .trip-card{
+    background:var(--bg-card);border-radius:18px;padding:16px;cursor:pointer;
+    box-shadow:0 6px 20px rgba(0,0,0,.09);transition:.2s;
+    border-top:5px solid var(--sea);position:relative;overflow:hidden;
+    color:var(--text);
+  }
+  .trip-card:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,.15);}
+  .trip-card.archived{opacity:.7;border-top-color:#999;filter:grayscale(.4);}
+  .trip-card h3{font-size:1.05rem;margin-bottom:6px;color:var(--sea-deep);display:flex;align-items:center;gap:6px;padding-right:40px;}
+  .trip-card .meta{font-size:.76rem;opacity:.75;margin-bottom:10px;line-height:1.5;}
+  .progress{background:#eef2f5;border-radius:20px;height:10px;overflow:hidden;margin:8px 0;}
+  body.dark .progress{background:#1e3a5f;}
+  .progress-bar{height:100%;background:linear-gradient(90deg,var(--green),var(--sea));border-radius:20px;transition:width .5s;display:flex;align-items:center;justify-content:center;color:#fff;font-size:.6rem;font-weight:700;min-width:24px;}
+  .trip-stats{display:flex;gap:8px;flex-wrap:wrap;font-size:.72rem;margin-top:6px;}
+  .trip-stats span{background:#f0f9ff;padding:3px 8px;border-radius:10px;color:var(--text);}
+  body.dark .trip-stats span{background:#1e3a5f;}
+  .countdown{background:#fff3cd;color:#b8860b;padding:4px 10px;border-radius:10px;font-size:.72rem;display:inline-block;margin-top:6px;font-weight:600;}
+  .countdown.urgent{background:#ffd6d6;color:#b00020;}
+  body.dark .countdown{background:#3a2f00;color:#ffd166;}
+  body.dark .countdown.urgent{background:#3a0000;color:#ffb4b4;}
+  .trip-actions{position:absolute;top:10px;right:10px;display:flex;gap:4px;}
+
+  /* ===== TONG SAMPAH ===== */
+  .trash-list{display:flex;flex-direction:column;gap:8px;margin-top:12px;}
+  .trash-item{
+    background:var(--bg-panel);border-radius:12px;padding:10px 14px;
+    display:flex;justify-content:space-between;align-items:center;gap:12px;
+    border-left:4px solid var(--coral);
+  }
+  .trash-item .info{flex:1;min-width:0;}
+  .trash-item .info b{display:block;font-size:.88rem;margin-bottom:2px;word-break:break-word;}
+  .trash-item .info small{font-size:.7rem;opacity:.7;}
+  .trash-item .actions{display:flex;gap:6px;flex-shrink:0;}
+
+  /* ===== GAME SECTION COLLAPSIBLE ===== */
+  .game-toggle{
+    display:flex;justify-content:space-between;align-items:center;
+    cursor:pointer;user-select:none;
+    padding:12px 16px;margin:20px 0 0;
+    background:var(--bg-card);
+    border-radius:14px;
+    box-shadow:0 3px 10px rgba(0,0,0,.07);
+    transition:.2s;
+  }
+  .game-toggle:hover{
+    box-shadow:0 6px 16px rgba(0,0,0,.12);
+    transform:translateY(-1px);
+  }
+  .game-toggle .toggle-left{
+    display:flex;align-items:center;gap:8px;
+    font-weight:700;font-size:1rem;
+  }
+  .game-toggle .toggle-right{
+    display:flex;align-items:center;gap:8px;
+    font-size:.8rem;opacity:.7;
+  }
+  .game-toggle .arrow{
+    transition:transform .3s ease;
+    font-size:.9rem;
+  }
+  .game-toggle.open .arrow{transform:rotate(180deg);}
+
+  .game-content{
+    max-height:0;overflow:hidden;opacity:0;
+    transition:max-height .4s ease,opacity .3s ease,margin .3s ease;
+    margin-top:0;
+  }
+  .game-content.open{
+    max-height:4000px;opacity:1;margin-top:12px;
+  }
+
+  .game-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .game-tab{padding:6px 14px;border-radius:10px;border:2px solid #caf0f8;background:var(--bg-card);color:var(--text);cursor:pointer;font-size:.76rem;font-weight:600;font-family:inherit;}
+  .game-tab.active{background:var(--reef-purple);color:#fff;border-color:transparent;}
+
+  .sudoku-board{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;max-width:360px;margin:0 auto;background:#023047;padding:3px;border-radius:10px;}
+  .sudoku-cell{aspect-ratio:1;background:#fff;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:600;cursor:pointer;border-radius:3px;transition:.1s;color:var(--sea-deep);}
+  body.dark .sudoku-cell{background:#1e3a5f;color:#e0f7fa;}
+  .sudoku-cell.fixed{background:#e0f7fa;color:#023047;cursor:default;}
+  body.dark .sudoku-cell.fixed{background:#0d2035;color:#90e0ef;}
+  .sudoku-cell.selected{background:#ffd166 !important;}
+  .sudoku-cell.error{background:#ffb4b4 !important;}
+  .sudoku-cell:hover:not(.fixed){background:#caf0f8;}
+  .sudoku-cell:nth-child(3n+1):not(:nth-child(9n+1)){border-left:2px solid var(--sea-deep);}
+  .sudoku-cell:nth-child(n+19):nth-child(-n+27),
+  .sudoku-cell:nth-child(n+46):nth-child(-n+54){border-bottom:2px solid var(--sea-deep);}
+  .sudoku-numpad{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:360px;margin:10px auto;}
+  .sudoku-num{padding:10px;border-radius:10px;border:2px solid #caf0f8;background:var(--bg-card);color:var(--text);font-size:1rem;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit;}
+  .sudoku-num:hover{background:#caf0f8;}
+  .sudoku-info{text-align:center;margin:8px 0;font-size:.8rem;}
+
+  .memory-board{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-width:340px;margin:10px auto;}
+  .memory-card{aspect-ratio:1;border-radius:10px;background:linear-gradient(135deg,var(--sea),var(--reef-purple));cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.6rem;transition:.3s;color:#fff;}
+  .memory-card.flipped{background:var(--bg-card);border:2px solid var(--sea);color:var(--text);}
+  .memory-card.matched{background:#d4edda;cursor:default;color:#155724;}
+
+  .game-stats{text-align:center;font-size:.82rem;margin:8px 0;display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+  .game-stats span{background:var(--bg-card);padding:4px 10px;border-radius:10px;border:1px solid #caf0f8;color:var(--text);}
+
+  .word-cell{aspect-ratio:1;background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:600;cursor:pointer;border-radius:3px;color:var(--sea-deep);user-select:none;transition:.15s;}
+  body.dark .word-cell{background:#1e3a5f;color:#e0f7fa;}
+  .word-cell.found{background:#d4edda;color:#155724;}
+  .word-cell.selected{background:#ffd166 !important;color:#023047;}
+  .word-item{padding:2px 8px;border-radius:8px;background:#e0f7fa;font-size:.76rem;font-weight:600;color:#023047;}
+  .word-item.found{background:#d4edda;text-decoration:line-through;opacity:.6;}
+
+  .reaction-box{
+    max-width:400px;margin:10px auto;padding:40px 20px;border-radius:20px;
+    background:var(--bg-card);text-align:center;cursor:pointer;user-select:none;
+    transition:.2s;border:3px solid var(--sea);color:var(--text);
+  }
+  .reaction-box.wait{background:#ffd166;color:#023047;border-color:#ff9f1c;}
+  .reaction-box.go{background:#2ecc71;color:#fff;border-color:#2ecc71;}
+  .reaction-box.toosoon{background:#e63946;color:#fff;border-color:#e63946;}
+  .reaction-box h2{font-size:1.6rem;margin-bottom:8px;}
+  .reaction-box p{font-size:.85rem;opacity:.85;}
+
+  /* ===== LOADING ===== */
+  .loading-overlay{position:fixed;inset:0;background:rgba(2,48,71,.85);color:#fff;display:flex;align-items:center;justify-content:center;flex-direction:column;z-index:200;font-size:1.1rem;gap:16px;text-align:center;padding:20px;}
+  .loading-overlay.hide{display:none;}
+  .spinner{font-size:3rem;animation:spin 1.5s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* ===== SPLASH BERCUTI ===== */
+  #splashScreen{
+    position:fixed;inset:0;z-index:9999;
+    background:linear-gradient(160deg,#006d9c 0%,#00b4d8 40%,#7b2cbf 100%);
+    display:flex;align-items:center;justify-content:center;
+    transition:opacity .5s ease,visibility .5s ease;
+    color:#fff;overflow:hidden;
+  }
+  #splashScreen.hide{opacity:0;visibility:hidden;pointer-events:none;}
+  #splashScreen::before{
+    content:"";position:absolute;bottom:0;left:0;right:0;height:120px;
+    background:radial-gradient(ellipse at 50% 100%, rgba(255,255,255,.25), transparent 70%);
+    animation:waveSplash 4s ease-in-out infinite;
+  }
+  @keyframes waveSplash{0%,100%{transform:translateX(-20px);}50%{transform:translateX(20px);}}
+  .splash-travel-icon{
+    position:absolute;font-size:2rem;opacity:.35;
+    animation:floatTravel linear infinite;
+    pointer-events:none;
+  }
+  .splash-plane{
+    position:absolute;font-size:2.5rem;
+    top:15%;left:-60px;
+    animation:flyPlane 7s linear infinite;
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.3));
+  }
+  @keyframes flyPlane{
+    0%{left:-60px;transform:translateY(0) rotate(0);}
+    50%{transform:translateY(-15px) rotate(-5deg);}
+    100%{left:calc(100% + 60px);transform:translateY(0) rotate(0);}
+  }
+  .splash-boat{
+    position:absolute;bottom:18%;left:-80px;
+    font-size:2.2rem;
+    animation:boatSail 9s linear infinite;
+  }
+  @keyframes boatSail{
+    0%{left:-80px;transform:rotate(-3deg);}
+    50%{transform:rotate(3deg);}
+    100%{left:calc(100% + 80px);transform:rotate(-3deg);}
+  }
+  .splash-luggage{
+    position:absolute;bottom:10%;right:10%;
+    font-size:2rem;
+    animation:luggageSpin 3s ease-in-out infinite;
+  }
+  @keyframes luggageSpin{
+    0%,100%{transform:rotate(-8deg) translateY(0);}
+    50%{transform:rotate(8deg) translateY(-8px);}
+  }
+  .splash-content{
+    text-align:center;position:relative;z-index:2;
+    animation:slideUpSplash .8s ease;padding:20px;
+  }
+  @keyframes slideUpSplash{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+  .splash-icon{
+    font-size:5rem;
+    animation:bob 2s ease-in-out infinite;
+    filter:drop-shadow(0 10px 20px rgba(0,0,0,.4));
+  }
+  @keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg);}50%{transform:translateY(-12px) rotate(3deg);}}
+  .splash-title{
+    font-size:1.9rem;font-weight:800;
+    margin-top:14px;letter-spacing:1px;
+    text-shadow:0 3px 12px rgba(0,0,0,.4);
+    background:linear-gradient(135deg,#fff,#ffe8a3);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .splash-sub{
+    font-size:.85rem;opacity:.92;
+    margin-top:4px;letter-spacing:3px;
+    text-transform:uppercase;font-weight:600;
+  }
+  .splash-destinations{
+    font-size:1.4rem;letter-spacing:6px;margin-top:18px;
+    animation:destGlow 3s ease-in-out infinite;
+  }
+  @keyframes destGlow{0%,100%{opacity:.7;}50%{opacity:1;filter:drop-shadow(0 0 10px rgba(255,255,255,.8));}}
+  .splash-tagline{font-size:.75rem;opacity:.75;margin-top:12px;letter-spacing:1px;font-style:italic;}
+  .splash-loader{
+    width:44px;height:44px;margin:24px auto 0;
+    border:3px solid rgba(255,255,255,.3);
+    border-top-color:#fff;border-radius:50%;
+    animation:spin .9s linear infinite;
+  }
+
+  /* ===== PRINT ===== */
+  @media print{
+    body{background:#fff;padding:0;}
+    .travel-bg,.ocean-bg,.toolbar,header::after,.shark,footer,.legend,.del,.edit,.info-box,.tabs,.game-toggle,.game-content,#btnDark,.badge.sync,.trip-actions{display:none !important;}
+    header{background:#006d9c !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;border-radius:0;padding:12px;}
+    .cards{grid-template-columns:repeat(4,1fr);}
+    .table-wrap{box-shadow:none;overflow:visible;}
+    table{min-width:0;font-size:.6rem;}
+    thead th{position:static;}
+    tbody td{padding:2px 2px;}
+    .status{cursor:default;font-size:.75rem;}
+    .status.selected{background:transparent !important;box-shadow:none;animation:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- SPLASH BERCUTI -->
+<div id="splashScreen">
+  <div class="splash-plane">✈️</div>
+  <div class="splash-boat">🚢</div>
+  <div class="splash-luggage">🧳</div>
+  <div id="splashTravelIcons"></div>
+  <div class="splash-content">
+    <div class="splash-icon">🌴</div>
+    <div class="splash-title">Trip Tracker</div>
+    <div class="splash-sub">Redang & Beyond</div>
+    <div class="splash-destinations">🏝️ ⛰️ 🏕️ 🚢 ✈️</div>
+    <div class="splash-tagline">"Setiap perjalanan bermula dengan satu langkah"</div>
+    <div class="splash-loader"></div>
+  </div>
+</div>
+
+<!-- BACKGROUND TRAVEL (landing) -->
+<div class="travel-bg" id="travelBg"></div>
+<!-- BACKGROUND OCEAN (trip) -->
+<div class="ocean-bg" id="oceanBg"></div>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner">🌊</div>
+  <div>Menyambung ke pelayan...</div>
+</div>
+
+<!-- ====== LANDING PAGE ====== -->
+<div class="wrap" id="landingPage" style="display:none;">
+  <header>
+    <div class="shark">🦈</div>
+    <h1>🌴 Trip Tracker · Redang & Beyond</h1>
+    <p>✈️ 🧳 🚢 🏔️ Rekod Bayaran Trip · Snorkeling Collection Tracker</p>
+    <div class="badges">
+      <span class="badge" id="badgeTotalTrip">📋 0 Trip</span>
+      <span class="badge" id="badgeAktif">🟢 0 Aktif</span>
+      <span class="badge" id="badgeArkib">📦 0 Arkib</span>
+      <span class="badge sync" id="badgeSync">🟡 Menyambung...</span>
+      <button class="badge" id="btnDark" onclick="toggleDark()">🌙 Dark</button>
+    </div>
+  </header>
+
+  <div class="cards">
+    <div class="card"><div class="label">Total Kutipan</div><div class="value" id="grandKutipan">RM0</div></div>
+    <div class="card reef"><div class="label">Total Sasaran</div><div class="value" id="grandSasaran">RM0</div></div>
+    <div class="card coral"><div class="label">Total Baki</div><div class="value" id="grandBaki" style="color:#e63946">RM0</div></div>
+    <div class="card"><div class="label">% Selesai</div><div class="value" id="grandPercent">0%</div></div>
+  </div>
+
+  <div class="toolbar">
+    <button class="btn btn-primary" onclick="bukaModalTrip()">➕ Trip Baru</button>
+    <button class="btn btn-green" onclick="backupAll()">💾 Backup</button>
+    <button class="btn btn-sand" onclick="document.getElementById('restoreAllFile').click()">📥 Restore</button>
+    <input type="file" id="restoreAllFile" accept=".json" style="display:none" onchange="restoreAll(event)">
+    <button class="btn btn-sand" onclick="muatDariBackupSetempat()">📦 Muat Backup</button>
+    <button class="btn btn-danger" onclick="bukaTongSampah()">🗑️ Tong Sampah</button>
+    <button class="btn btn-green" id="btnInstall" onclick="installPwa()" style="display:none;">📲 Install</button>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="aktif" onclick="tukarTab('aktif')">🟢 Aktif</div>
+    <div class="tab" data-tab="arkib" onclick="tukarTab('arkib')">📦 Arkib</div>
+  </div>
+
+  <div class="trip-grid" id="tripGrid"></div>
+
+  <!-- GAME COLLAPSIBLE -->
+  <div class="game-toggle" id="gameToggle" onclick="toggleGameSection()">
+    <div class="toggle-left">🎮 Mini Game</div>
+    <div class="toggle-right">
+      <span id="gameToggleLabel">Buka</span>
+      <span class="arrow">▼</span>
+    </div>
+  </div>
+
+  <div class="game-content" id="gameContent">
+    <div class="game-tabs">
+      <div class="game-tab active" data-game="sudoku" onclick="tukarGame('sudoku')">🔢 Sudoku</div>
+      <div class="game-tab" data-game="memory" onclick="tukarGame('memory')">🧠 Memory</div>
+      <div class="game-tab" data-game="word" onclick="tukarGame('word')">🔤 Word Search</div>
+      <div class="game-tab" data-game="reaction" onclick="tukarGame('reaction')">⚡ Reaction</div>
+    </div>
+
+    <div id="gameSudoku">
+      <div class="sudoku-info">
+        <label style="font-size:.8rem;font-weight:600;">Level: </label>
+        <select id="sudokuLevel" onchange="mulaSudoku()" style="padding:6px;border-radius:8px;border:2px solid #caf0f8;background:var(--bg-card);color:var(--text);font-family:inherit;">
+          <option value="easy">😊 Senang</option>
+          <option value="medium">😐 Sederhana</option>
+          <option value="hard">😈 Susah</option>
+        </select>
+        <button class="btn btn-purple btn-sm" onclick="mulaSudoku()" style="margin-left:6px;">🔄 Baru</button>
+        <button class="btn btn-sand btn-sm" onclick="padamPilihan()">⌫ Padam</button>
+      </div>
+      <div class="sudoku-board" id="sudokuBoard"></div>
+      <div class="sudoku-numpad" id="sudokuNumpad"></div>
+      <div class="game-stats">
+        <span>⏱️ <span id="sudokuTime">00:00</span></span>
+        <span>🏆 Best: <span id="sudokuBest">-</span></span>
+      </div>
+    </div>
+
+    <div id="gameMemory" style="display:none;">
+      <div class="sudoku-info">
+        <label style="font-size:.8rem;font-weight:600;">Level: </label>
+        <select id="memoryLevel" onchange="mulaMemory()" style="padding:6px;border-radius:8px;border:2px solid #caf0f8;background:var(--bg-card);color:var(--text);font-family:inherit;">
+          <option value="4">😊 4×4 (8 kad)</option>
+          <option value="5" selected>😐 4×5 (10 kad)</option>
+          <option value="6">😈 5×6 (15 kad)</option>
+        </select>
+        <button class="btn btn-purple btn-sm" onclick="mulaMemory()" style="margin-left:6px;">🔄 Baru</button>
+      </div>
+      <div class="memory-board" id="memoryBoard"></div>
+      <div class="game-stats">
+        <span>⏱️ <span id="memoryTime">00:00</span></span>
+        <span>🔄 Langkah: <span id="memoryMoves">0</span></span>
+        <span>🏆 Best: <span id="memoryBest">-</span></span>
+      </div>
+    </div>
+
+    <div id="gameWord" style="display:none;">
+      <div class="sudoku-info">
+        <label style="font-size:.8rem;font-weight:600;">Level: </label>
+        <select id="wordLevel" onchange="mulaWord()" style="padding:6px;border-radius:8px;border:2px solid #caf0f8;background:var(--bg-card);color:var(--text);font-family:inherit;">
+          <option value="8">😊 8×8</option>
+          <option value="10" selected>😐 10×10</option>
+          <option value="12">😈 12×12</option>
+        </select>
+        <button class="btn btn-purple btn-sm" onclick="mulaWord()" style="margin-left:6px;">🔄 Baru</button>
+      </div>
+      <div id="wordGrid" style="display:grid;gap:2px;max-width:400px;margin:10px auto;background:#023047;padding:3px;border-radius:10px;"></div>
+      <div style="text-align:center;font-size:.78rem;line-height:1.7;">
+        <b>Cari perkataan:</b><br>
+        <div id="wordList" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:4px;"></div>
+      </div>
+      <div class="game-stats">
+        <span>⏱️ <span id="wordTime">00:00</span></span>
+        <span>✅ <span id="wordFound">0</span>/<span id="wordTotal">0</span></span>
+      </div>
+    </div>
+
+    <div id="gameReaction" style="display:none;">
+      <div class="sudoku-info">
+        <label style="font-size:.8rem;font-weight:600;">Level: </label>
+        <select id="reactionLevel" onchange="resetReaction()" style="padding:6px;border-radius:8px;border:2px solid #caf0f8;background:var(--bg-card);color:var(--text);font-family:inherit;">
+          <option value="3000">😊 Slow (3s)</option>
+          <option value="1800" selected>😐 Normal (1.8s)</option>
+          <option value="800">😈 Fast (0.8s)</option>
+        </select>
+        <button class="btn btn-purple btn-sm" onclick="resetReaction()" style="margin-left:6px;">🔄 Baru</button>
+      </div>
+      <div id="reactionBox" class="reaction-box" onclick="reactionClick()">
+        <h2>⚡ Sedia?</h2>
+        <p>Klik kotak bila warna bertukar HIJAU</p>
+      </div>
+      <div class="game-stats">
+        <span>⏱️ Masa: <span id="reactionTime">-</span></span>
+        <span>🏆 Best: <span id="reactionBest">-</span></span>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="wave">✈️ 🧳 🚢 🏔️ 🏕️ 🗺️ 🎒 🌴</div>
+    <p>Trip Tracker · Setiap perjalanan ada cerita</p>
+  </footer>
+</div>
+
+<!-- ====== TRIP PAGE ====== -->
+<div class="wrap" id="tripPage" style="display:none;">
+  <header>
+    <div class="shark">🦈</div>
+    <h1 id="tripTitle">🏝️ Trip</h1>
+    <p id="tripSubtitle">Rekod Bayaran Bulanan</p>
+    <div class="badges">
+      <span class="badge" id="badgeKadar">👨 RM30 · 🧒 RM20</span>
+      <span class="badge" id="badgeBulan">📅 0 Bulan</span>
+      <span class="badge" id="badgeCountdown">⏳ -</span>
+      <span class="badge sync" id="badgeSync2">🟡</span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <button class="btn btn-sand" onclick="balikLanding()">🏠 Home</button>
+    <button class="btn btn-purple" onclick="bukaModalEditTrip()">⚙️ Edit Trip</button>
+    <button class="btn btn-primary" onclick="bukaModalNama()">➕ Nama</button>
+    <button class="btn btn-purple" onclick="bukaModalBulan()">➕ Bulan</button>
+    <button class="btn btn-green" onclick="exportCSV()">📤 CSV</button>
+    <button class="btn btn-sand" onclick="backupTrip()">💾 Backup</button>
+  </div>
+
+  <div class="cards">
+    <div class="card"><div class="label">Terkumpul</div><div class="value" id="totalKutipan">RM0</div></div>
+    <div class="card reef"><div class="label">Sasaran</div><div class="value" id="sasaran">RM0</div></div>
+    <div class="card coral"><div class="label">Baki</div><div class="value" id="bakiSemua" style="color:#e63946">RM0</div></div>
+    <div class="card"><div class="label">Peserta</div><div class="value" id="bilPeserta">0</div></div>
+  </div>
+
+  <div class="info-box">
+    ✏️ <b>Ubah status:</b> Klik <b>sekali</b> pada sel → kuning. Klik <b>kali kedua</b> → tukar ✅ → ⚠️ → ❌.<br>
+    ✏️ <b>Edit peserta:</b> Klik ✏️ sekali → kuning, klik lagi → buka edit.<br>
+    🗑️ <b>Padam:</b> Klik 🗑️ sekali → merah, klik lagi → masuk Tong Sampah.<br>
+    🗑️ <b>Padam bulan:</b> Klik × pada header → confirm.
+  </div>
+
+  <div class="toolbar">
+    <input class="search" id="cari" placeholder="🔍 Cari nama..." oninput="renderTrip()">
+  </div>
+
+  <div class="section-title">📊 Jadual Rekod Bayaran</div>
+  <div class="table-wrap">
+    <table id="jadual">
+      <thead></thead>
+      <tbody></tbody>
+      <tfoot></tfoot>
+    </table>
+  </div>
+
+  <div class="legend">
+    <span>✅ Bayar penuh</span>
+    <span>⚠️ Separa</span>
+    <span>❌ Belum bayar</span>
+    <span>🟡 Selected</span>
+  </div>
+
+  <footer>
+    <div class="wave">✈️ 🧳 🚢 🏔️ 🏕️ 🗺️ 🎒 🌴</div>
+    <p id="tripFooter">Trip Tracker · Cloud Sync</p>
+  </footer>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="modalTrip">
+  <div class="modal-box">
+    <h3 id="modalTripTitle">➕ Trip Baru</h3>
+    <label>Nama Trip</label>
+    <input id="inputTripNama" placeholder="Contoh: Trip Pulau Tioman 2028" autocomplete="off">
+    <label>Tarikh / Keterangan</label>
+    <input id="inputTripTarikh" placeholder="Contoh: Jun 2028" autocomplete="off">
+    <label>Deadline (pilihan)</label>
+    <input id="inputTripDeadline" type="date">
+    <label>Kadar Dewasa (RM/bulan)</label>
+    <input id="inputKadarDewasa" type="number" value="30" min="1">
+    <label>Kadar Kanak-kanak (RM/bulan)</label>
+    <input id="inputKadarKanak" type="number" value="20" min="1">
+    <label>Salin Peserta Dari (pilihan)</label>
+    <select id="inputSalinDari"><option value="">— Tiada —</option></select>
+    <label>Status</label>
+    <select id="inputStatus">
+      <option value="aktif">🟢 Aktif</option>
+      <option value="arkib">📦 Arkib</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-sand" onclick="tutupModal('modalTrip')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanTrip()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalNama">
+  <div class="modal-box">
+    <h3 id="modalNamaTitle">➕ Tambah Peserta</h3>
+    <label>Nama</label>
+    <input id="inputNama" placeholder="Contoh: Ahmad" autocomplete="off">
+    <label>Kategori</label>
+    <select id="inputJenis">
+      <option value="Dewasa">Dewasa</option>
+      <option value="Kanak2">Kanak-kanak</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-sand" onclick="tutupModal('modalNama')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanNama()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalBulan">
+  <div class="modal-box">
+    <h3>➕ Tambah Bulan</h3>
+    <label>Nama Bulan</label>
+    <input id="inputBulan" placeholder="Contoh: Mei" autocomplete="off">
+    <div class="modal-actions">
+      <button class="btn btn-sand" onclick="tutupModal('modalBulan')">Batal</button>
+      <button class="btn btn-primary" onclick="simpanBulan()">Simpan</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalTongSampah">
+  <div class="modal-box" style="max-width:600px;">
+    <h3>🗑️ Tong Sampah</h3>
+    <p style="font-size:.8rem;opacity:.75;line-height:1.5;">Item yang dipadam. Pulihkan atau padam kekal.</p>
+    <div class="trash-list" id="trashList"></div>
+    <div class="modal-actions">
+      <button class="btn btn-sand" onclick="tutupModal('modalTongSampah')">Tutup</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modalConfirm">
+  <div class="modal-box">
+    <h3 id="confirmTitle">Pengesahan</h3>
+    <p id="confirmMsg" style="font-size:.86rem;line-height:1.45;"></p>
+    <div class="modal-actions">
+      <button class="btn btn-sand" onclick="tutupModal('modalConfirm')">Batal</button>
+      <button class="btn btn-danger" id="confirmBtn">Ya</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+/* ====== FIREBASE ====== */
+const firebaseConfig = {
+  apiKey: "AIzaSyC5XeI2NHUvgot-bI0ODAsX4cbyGX0MO-s",
+  authDomain: "world-a1516.firebaseapp.com",
+  projectId: "world-a1516",
+  storageBucket: "world-a1516.firebasestorage.app",
+  messagingSenderId: "759112607367",
+  appId: "1:759112607367:web:b4e02025d896fe62fe7a22",
+  measurementId: "G-6GCFPLZD76"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const DOC_REF = db.collection("triptracker").doc("main");
+
+let syncState = "connecting";
+
+function setSyncState(state){
+  syncState = state;
+  const badges = [document.getElementById("badgeSync"), document.getElementById("badgeSync2")];
+  badges.forEach(b=>{
+    if(!b) return;
+    b.classList.remove("offline","syncing");
+    if(state==="synced"){b.textContent="🟢 Sync";}
+    else if(state==="syncing"){b.textContent="🟡 Menyimpan...";b.classList.add("syncing");}
+    else if(state==="error"){b.textContent="🔴 Offline";b.classList.add("offline");}
+    else{b.textContent="🟡 Menyambung...";b.classList.add("syncing");}
+  });
+}
+
+/* ====== SPLASH TRAVEL ICONS ====== */
+(function(){
+  const c = document.getElementById("splashTravelIcons");
+  if(!c) return;
+  const icons = ["🧳","🎒","🗺️","🚗","🚢","🏔️","🏕️","🎡","🚁","🛶","⛱️","🗼","🏰","🌋","🏖️","🐫"];
+  for(let i=0;i<12;i++){
+    const el = document.createElement("div");
+    el.className = "splash-travel-icon";
+    el.textContent = icons[Math.floor(Math.random()*icons.length)];
+    el.style.left = (Math.random()*95)+"%";
+    el.style.top = (Math.random()*95)+"%";
+    el.style.fontSize = (1.3 + Math.random()*1.5)+"rem";
+    el.style.animationDuration = (4 + Math.random()*5)+"s";
+    el.style.animationDelay = (-Math.random()*5)+"s";
+    c.appendChild(el);
+  }
+})();
+
+/* ====== BACKGROUND ====== */
+(function(){
+  const bg = document.getElementById("travelBg");
+  if(!bg) return;
+  const icons = ["✈️","🧳","🚢","🏔️","🏕️","🗺️","🎒","🚗","🌴","🏖️","🐫","🚁","⛱️","🏝️","🌋","🗼"];
+  for(let i=0;i<14;i++){
+    const el = document.createElement("div");
+    el.className = "travel-icon" + (Math.random()>0.5?" rev":"");
+    el.textContent = icons[Math.floor(Math.random()*icons.length)];
+    el.style.top = (Math.random()*90)+"vh";
+    el.style.fontSize = (1 + Math.random()*1.2)+"rem";
+    el.style.animationDuration = (20 + Math.random()*25)+"s";
+    el.style.animationDelay = (-Math.random()*30)+"s";
+    el.style.opacity = (0.15 + Math.random()*0.2);
+    bg.appendChild(el);
+  }
+  const plane = document.createElement("div");
+  plane.className = "bg-plane";
+  plane.textContent = "✈️";
+  plane.style.animationDuration = "25s";
+  plane.style.animationDelay = "-5s";
+  bg.appendChild(plane);
+  const boat = document.createElement("div");
+  boat.className = "bg-plane";
+  boat.textContent = "🚢";
+  boat.style.animationDuration = "35s";
+  boat.style.animationDelay = "-15s";
+  boat.style.top = "70%";
+  boat.style.fontSize = "1.8rem";
+  bg.appendChild(boat);
+
+  // Ocean bg untuk trip page
+  const ob = document.getElementById("oceanBg");
+  if(ob){
+    const fish = ["🐠","🐟","🐡","🦈","🐬","🐢","🦐","🐙"];
+    for(let i=0;i<8;i++){
+      const f=document.createElement("div");
+      f.className="fish"+(Math.random()>0.5?" rev":"");
+      f.textContent=fish[Math.floor(Math.random()*fish.length)];
+      f.style.top=(Math.random()*90)+"vh";
+      f.style.fontSize=(1+Math.random()*1.4)+"rem";
+      f.style.animationDuration=(18+Math.random()*22)+"s";
+      f.style.animationDelay=(-Math.random()*30)+"s";
+      f.style.opacity=(0.15+Math.random()*0.22);
+      ob.appendChild(f);
+    }
+    for(let i=0;i<14;i++){
+      const b=document.createElement("div");
+      b.className="bubble";
+      const s=5+Math.random()*12;
+      b.style.width=s+"px";b.style.height=s+"px";
+      b.style.left=(Math.random()*100)+"vw";
+      b.style.animationDuration=(8+Math.random()*10)+"s";
+      b.style.animationDelay=(-Math.random()*15)+"s";
+      ob.appendChild(b);
+    }
+  }
+})();
+
+/* ====== SPLASH HIDE — SEKALI PER SESI ====== */
+(function(){
+  const splash = document.getElementById("splashScreen");
+  if(!splash) return;
+  const KEY = "triptracker_splash_shown";
+  if(sessionStorage.getItem(KEY) === "1"){
+    splash.remove(); return;
+  }
+  sessionStorage.setItem(KEY, "1");
+  const HIDE_DELAY = 2200;
+  function hide(){
+    splash.classList.add("hide");
+    setTimeout(()=>{ if(splash.parentNode) splash.remove(); }, 600);
+  }
+  window.addEventListener("load", ()=>{
+    const elapsed = performance.now();
+    const wait = Math.max(0, HIDE_DELAY - elapsed);
+    setTimeout(()=>{
+      const overlay = document.getElementById("loadingOverlay");
+      if(overlay && !overlay.classList.contains("hide")){
+        const check = setInterval(()=>{
+          if(overlay.classList.contains("hide")){ clearInterval(check); hide(); }
+        }, 100);
+        setTimeout(()=>{clearInterval(check);hide();}, 6000);
+      }else{
+        hide();
+      }
+    }, wait);
+  });
+  setTimeout(()=>{ if(document.body.contains(splash) && !splash.classList.contains("hide")) hide(); }, 10000);
+})();
+
+/* ====== DARK MODE ====== */
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  const isDark = document.body.classList.contains("dark");
+  localStorage.setItem("triptracker_dark", isDark?"1":"0");
+  document.getElementById("btnDark").textContent = isDark?"☀️ Light":"🌙 Dark";
+}
+if(localStorage.getItem("triptracker_dark")==="1"){
+  document.body.classList.add("dark");
+  document.addEventListener("DOMContentLoaded", ()=>{
+    const b = document.getElementById("btnDark");
+    if(b) b.textContent = "☀️ Light";
+  });
+}
+
+/* ====== DATA DEFAULT ====== */
+const DEFAULT_TRIPS = [
+  {
+    id:"redang2027", nama:"Trip Pulau Redang 2027",
+    tarikh:"Jul 2026 – Apr 2027", deadline:"2027-04-15",
+    kadar:{Dewasa:30,Kanak2:20}, status:"aktif",
+    bulan:["Jul","Ogo","Sep","Okt","Nov","Dis","Jan","Feb","Mac","Apr"],
+    peserta:[
+      {nama:"Dilla",jenis:"Dewasa",bayar:[1,1,1,0,0,0,0,0,0,0]},
+      {nama:"Pikah",jenis:"Dewasa",bayar:[1,1,1,0,0,0,0,0,0,0]},
+      {nama:"Amir",jenis:"Dewasa",bayar:[0,0,0,0,0,0,0,0,0,0]},
+      {nama:"Tirah",jenis:"Dewasa",bayar:[0,0,0,0,0,0,0,0,0,0]},
+      {nama:"Razif",jenis:"Dewasa",bayar:[1,1,1,1,0,0,0,0,0,0]},
+      {nama:"Nadiah",jenis:"Dewasa",bayar:[1,1,1,1,0,0,0,0,0,0]},
+      {nama:"Kak Iti",jenis:"Dewasa",bayar:[1,1,1,0,0,0,0,0,0,0]},
+      {nama:"Kak Laini",jenis:"Dewasa",bayar:[0,0,0,0,0,0,0,0,0,0]},
+      {nama:"Fathiah",jenis:"Dewasa",bayar:[1,0,0,0,0,0,0,0,0,0]},
+      {nama:"Shikin",jenis:"Dewasa",bayar:[0,0,0,0,0,0,0,0,0,0]},
+      {nama:"Yana",jenis:"Dewasa",bayar:[0,0,0,0,0,0,0,0,0,0]},
+      {nama:"Nina",jenis:"Dewasa",bayar:[1,1,1,0,0,0,0,0,0,0]},
+      {nama:"Alia",jenis:"Dewasa",bayar:[0,0,0,0,0,0,0,0,0,0]},
+      {nama:"Ammar",jenis:"Kanak2",bayar:[0,0,0,0,0,0,0,0,0,0]},
+      {nama:"Rania",jenis:"Kanak2",bayar:[0,0,0,0,0,0,0,0,0,0]},
+      {nama:"Iman",jenis:"Kanak2",bayar:[1,1,1,0,0,0,0,0,0,0]},
+      {nama:"Alya",jenis:"Kanak2",bayar:[0,0,0,0,0,0,0,0,0,0]},
+      {nama:"Mateen",jenis:"Kanak2",bayar:[1,1,1,1,0,0,0,0,0,0]},
+      {nama:"Muqree",jenis:"Kanak2",bayar:[1,1,1,1,0,0,0,0,0,0]},
+    ]
+  }
+];
+
+let data = {trips:[], deletedTrips:[], deletedPeserta:[], deletedBulan:[]};
+let activeTripId=null;
+let currentTab="aktif";
+let editTripId=null;
+let editPesertaIndex=-1;
+let selectedCell=null;
+let initialized=false;
+
+let armedEdit=null, armedDel=null, armedTimeout=null;
+
+function armButton(type, payload, btn){
+  document.querySelectorAll(".armed").forEach(el=>el.classList.remove("armed"));
+  if(armedEdit && armedEdit.type===type && JSON.stringify(armedEdit.payload)===JSON.stringify(payload)){
+    clearTimeout(armedTimeout);
+    const p=armedEdit.payload;
+    armedEdit=null; armedDel=null;
+    if(type==="editPeserta") openEditPeserta(p.tripId, p.index);
+    return true;
+  }
+  armedEdit={type,payload,time:Date.now()};
+  if(btn) btn.classList.add("armed");
+  clearTimeout(armedTimeout);
+  armedTimeout=setTimeout(()=>{
+    armedEdit=null; armedDel=null;
+    document.querySelectorAll(".armed").forEach(el=>el.classList.remove("armed"));
+  }, 2500);
+  return false;
+}
+
+function armDelete(type, payload, btn, callback){
+  document.querySelectorAll(".armed").forEach(el=>el.classList.remove("armed"));
+  if(armedDel && armedDel.type===type && JSON.stringify(armedDel.payload)===JSON.stringify(payload)){
+    clearTimeout(armedTimeout);
+    armedDel=null; armedEdit=null;
+    callback();
+    return true;
+  }
+  armedDel={type,payload,time:Date.now()};
+  if(btn) btn.classList.add("armed");
+  clearTimeout(armedTimeout);
+  armedTimeout=setTimeout(()=>{
+    armedEdit=null; armedDel=null;
+    document.querySelectorAll(".armed").forEach(el=>el.classList.remove("armed"));
+  }, 2500);
+  return false;
+}
+
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg;t.classList.add("show");
+  clearTimeout(t._id);t._id=setTimeout(()=>t.classList.remove("show"),2200);
+}
+function confirmBox(title,msg,cb){
+  document.getElementById("confirmTitle").textContent=title;
+  document.getElementById("confirmMsg").textContent=msg;
+  const btn=document.getElementById("confirmBtn");
+  const clone=btn.cloneNode(true);
+  btn.parentNode.replaceChild(clone,btn);
+  clone.onclick=()=>{tutupModal("modalConfirm");cb();};
+  document.getElementById("modalConfirm").classList.add("show");
+}
+function tutupModal(id){document.getElementById(id).classList.remove("show");}
+function getTrip(){return data.trips.find(t=>t.id===activeTripId);}
+const SIMBOL={1:"✅",0.5:"⚠️",0:"❌"};
+const ikon=v=>SIMBOL[v]??"❌";
+
+function kiraCountdown(deadline){
+  if(!deadline) return null;
+  const now=new Date(); now.setHours(0,0,0,0);
+  const end=new Date(deadline); end.setHours(0,0,0,0);
+  return Math.floor((end-now)/(1000*60*60*24));
+}
+
+/* ====== SAVE ====== */
+let saveTimer=null;
+function save(){
+  try{
+    localStorage.setItem("triptracker_backup", JSON.stringify({data, savedAt:new Date().toISOString()}));
+  }catch(e){}
+  setSyncState("syncing");
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(async ()=>{
+    try{
+      await DOC_REF.set({
+        trips: data.trips,
+        deletedTrips: data.deletedTrips,
+        deletedPeserta: data.deletedPeserta,
+        deletedBulan: data.deletedBulan,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      setSyncState("synced");
+    }catch(err){
+      console.error("Save error:",err);
+      setSyncState("error");
+      toast("❌ Gagal simpan");
+    }
+  }, 400);
+}
+
+function muatDariBackupSetempat(){
+  try{
+    const raw=localStorage.getItem("triptracker_backup");
+    if(!raw){toast("❌ Tiada backup setempat");return;}
+    const parsed=JSON.parse(raw);
+    const when=parsed.savedAt?new Date(parsed.savedAt).toLocaleString("ms-MY"):"-";
+    confirmBox("Muat Backup Setempat","Ganti data semasa dengan backup?\n\nDisimpan: "+when,()=>{
+      data=parsed.data;
+      if(!data.deletedTrips) data.deletedTrips=[];
+      if(!data.deletedPeserta) data.deletedPeserta=[];
+      if(!data.deletedBulan) data.deletedBulan=[];
+      save(); renderLanding();
+      toast("📦 Backup dimuat");
+    });
+  }catch(e){toast("❌ Backup rosak");}
+}
+
+/* ====== FIRESTORE LOAD ====== */
+function initFirestore(){
+  setSyncState("connecting");
+  DOC_REF.onSnapshot((doc)=>{
+    const overlay=document.getElementById("loadingOverlay");
+    if(doc.exists){
+      const d=doc.data();
+      data.trips=d.trips||[];
+      data.deletedTrips=d.deletedTrips||[];
+      data.deletedPeserta=d.deletedPeserta||[];
+      data.deletedBulan=d.deletedBulan||[];
+      if(!initialized){
+        const savedActive=localStorage.getItem("triptracker_active");
+        if(savedActive && data.trips.find(t=>t.id===savedActive)) activeTripId=savedActive;
+        initialized=true;
+      }
+      overlay.classList.add("hide");
+      setSyncState("synced");
+      if(activeTripId && data.trips.find(t=>t.id===activeTripId)){
+        document.getElementById("landingPage").style.display="none";
+        document.getElementById("tripPage").style.display="block";
+        renderTrip();
+      }else{
+        activeTripId=null;
+        renderLanding();
+      }
+    }else{
+      data.trips=JSON.parse(JSON.stringify(DEFAULT_TRIPS));
+      data.deletedTrips=[];data.deletedPeserta=[];data.deletedBulan=[];
+      DOC_REF.set({
+        trips: data.trips,
+        deletedTrips: [], deletedPeserta: [], deletedBulan: [],
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(()=>{
+        overlay.classList.add("hide");
+        setSyncState("synced");
+      }).catch(err=>{
+        console.error(err);
+        overlay.classList.add("hide");
+        setSyncState("error");
+        toast("❌ Gagal init");
+        data.trips=JSON.parse(JSON.stringify(DEFAULT_TRIPS));
+        renderLanding();
+      });
+    }
+  },(err)=>{
+    console.error("Snapshot error:",err);
+    document.getElementById("loadingOverlay").classList.add("hide");
+    setSyncState("error");
+    toast("❌ Tiada sambungan Firestore");
+    renderLanding();
+  });
+}
+
+/* ====== GAME TOGGLE ====== */
+const GAME_KEY="triptracker_game_open";
+function toggleGameSection(){
+  const c=document.getElementById("gameContent");
+  const t=document.getElementById("gameToggle");
+  const l=document.getElementById("gameToggleLabel");
+  const isOpen=c.classList.contains("open");
+  if(isOpen){
+    c.classList.remove("open"); t.classList.remove("open");
+    l.textContent="Buka"; localStorage.setItem(GAME_KEY,"0");
+  }else{
+    c.classList.add("open"); t.classList.add("open");
+    l.textContent="Tutup"; localStorage.setItem(GAME_KEY,"1");
+    if(sudokuPuzzle.length===0) mulaSudoku();
+    if(memoryCards.length===0) mulaMemory();
+    if(wordGrid.length===0) mulaWord();
+  }
+}
+function applyGameState(){
+  const isOpen=localStorage.getItem(GAME_KEY)==="1";
+  if(isOpen){
+    document.getElementById("gameContent").classList.add("open");
+    document.getElementById("gameToggle").classList.add("open");
+    document.getElementById("gameToggleLabel").textContent="Tutup";
+  }
+}
+
+/* ====== LANDING ====== */
+function tukarTab(tab){
+  currentTab=tab;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t.dataset.tab===tab));
+  renderLanding();
+}
+
+function renderLanding(){
+  document.getElementById("landingPage").style.display="block";
+  document.getElementById("tripPage").style.display="none";
+
+  const grid=document.getElementById("tripGrid");
+  grid.innerHTML="";
+  const aktif=data.trips.filter(t=>t.status==="aktif");
+  const arkib=data.trips.filter(t=>t.status==="arkib");
+  document.getElementById("badgeTotalTrip").textContent="📋 "+data.trips.length+" Trip";
+  document.getElementById("badgeAktif").textContent="🟢 "+aktif.length+" Aktif";
+  document.getElementById("badgeArkib").textContent="📦 "+arkib.length+" Arkib";
+
+  let gb=0,gs=0;
+  data.trips.forEach(t=>{
+    t.peserta.forEach(p=>{
+      const yr=t.kadar[p.jenis]||0;
+      const s=yr*t.bulan.length;
+      let b=0;
+      p.bayar.forEach(v=>b+=yr*v);
+      gb+=b;gs+=s;
+    });
+  });
+  document.getElementById("grandKutipan").textContent="RM"+gb;
+  document.getElementById("grandSasaran").textContent="RM"+gs;
+  document.getElementById("grandBaki").textContent="RM"+(gs-gb);
+  document.getElementById("grandPercent").textContent=(gs>0?Math.round(gb/gs*100):0)+"%";
+
+  const list=currentTab==="aktif"?aktif:arkib;
+  if(list.length===0){
+    grid.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:30px;opacity:.6;">
+      ${currentTab==="aktif"?"Tiada trip aktif. Tekan ➕ Trip Baru.":"Tiada trip dalam arkib."}
+    </div>`;
+    return;
+  }
+
+  list.forEach(t=>{
+    const card=document.createElement("div");
+    card.className="trip-card"+(t.status==="arkib"?" archived":"");
+    let tb=0,ts=0;
+    t.peserta.forEach(p=>{
+      const yr=t.kadar[p.jenis]||0;
+      const s=yr*t.bulan.length;
+      let b=0;
+      p.bayar.forEach(v=>b+=yr*v);
+      tb+=b;ts+=s;
+    });
+    const pct=ts>0?Math.round(tb/ts*100):0;
+    let cdHTML="";
+    const diff=kiraCountdown(t.deadline);
+    if(diff!==null){
+      if(diff<0) cdHTML=`<div class="countdown urgent">⏰ Tamat ${Math.abs(diff)} hari lalu</div>`;
+      else if(diff===0) cdHTML=`<div class="countdown urgent">⏰ Deadline HARI INI</div>`;
+      else if(diff<=7) cdHTML=`<div class="countdown urgent">⏳ ${diff} hari lagi</div>`;
+      else cdHTML=`<div class="countdown">⏳ ${diff} hari lagi</div>`;
+    }
+    card.innerHTML=`
+      <div class="trip-actions">
+        <button class="del" title="Padam (klik 2 kali)" onclick="event.stopPropagation();handleDeleteTrip('${t.id}',this)">🗑️</button>
+      </div>
+      <h3>🏝️ ${t.nama}</h3>
+      <div class="meta">📅 ${t.tarikh||"-"}<br>👥 ${t.peserta.length} peserta · 📆 ${t.bulan.length} bulan</div>
+      <div class="progress"><div class="progress-bar" style="width:${pct}%">${pct}%</div></div>
+      <div class="trip-stats">
+        <span>💰 RM${tb}</span>
+        <span>🎯 RM${ts}</span>
+        <span>💸 RM${ts-tb}</span>
+      </div>
+      ${cdHTML}
+    `;
+    card.onclick=()=>bukaTrip(t.id);
+    grid.appendChild(card);
+  });
+}
+
+function handleDeleteTrip(id, btn){
+  const first = armDelete("trip", id, btn, ()=>padamTripById(id));
+  if(!first) toast("🗑️ Klik sekali lagi untuk padam trip");
+}
+
+function bukaTrip(id){
+  activeTripId=id;
+  localStorage.setItem("triptracker_active",id);
+  document.getElementById("landingPage").style.display="none";
+  document.getElementById("tripPage").style.display="block";
+  selectedCell=null;
+  armedEdit=null;armedDel=null;
+  renderTrip();
+  window.scrollTo(0,0);
+}
+
+function balikLanding(){
+  activeTripId=null;
+  localStorage.removeItem("triptracker_active");
+  selectedCell=null;
+  armedEdit=null;armedDel=null;
+  renderLanding();
+  window.scrollTo(0,0);
+}
+
+/* ====== TRIP RENDER ====== */
+function renderTrip(){
+  const t=getTrip();
+  if(!t){balikLanding();return;}
+
+  document.getElementById("tripTitle").textContent="🏝️ "+t.nama;
+  document.getElementById("tripSubtitle").textContent="📅 "+(t.tarikh||"-");
+  document.getElementById("badgeKadar").textContent=`👨 RM${t.kadar.Dewasa} · 🧒 RM${t.kadar.Kanak2}`;
+  document.getElementById("badgeBulan").textContent="📅 "+t.bulan.length+" Bulan";
+  document.getElementById("tripFooter").textContent=t.nama+" · Cloud Sync";
+
+  const cd=document.getElementById("badgeCountdown");
+  const diff=kiraCountdown(t.deadline);
+  if(diff===null){cd.textContent="⏳ Tiada deadline";cd.style.background="rgba(255,255,255,.22)";}
+  else if(diff<0){cd.textContent="⏰ Tamat "+Math.abs(diff)+"h lalu";cd.style.background="rgba(230,57,70,.6)";}
+  else if(diff===0){cd.textContent="⏰ HARI INI";cd.style.background="rgba(230,57,70,.6)";}
+  else if(diff<=7){cd.textContent="⏳ "+diff+" hari";cd.style.background="rgba(255,159,28,.6)";}
+  else{cd.textContent="⏳ "+diff+" hari";cd.style.background="rgba(255,255,255,.22)";}
+
+  const q=(document.getElementById("cari").value||"").toLowerCase().trim();
+  const thead=document.querySelector("#jadual thead");
+  const tbody=document.querySelector("#jadual tbody");
+  const tfoot=document.querySelector("#jadual tfoot");
+
+  let h=`<tr><th>No</th><th>Nama</th><th>Kat.</th><th>Yuran</th>`;
+  t.bulan.forEach((b,bi)=>{
+    h+=`<th class="bulan">${b}<button onclick="event.stopPropagation();padamBulan(${bi})" style="position:absolute;top:1px;right:1px;background:rgba(255,255,255,.25);border:none;color:#fff;border-radius:4px;cursor:pointer;font-size:.6rem;padding:0 4px;line-height:1.2;" title="Padam bulan">×</button></th>`;
+  });
+  h+=`<th>Bayar</th><th>Sasar</th><th>Baki</th><th></th></tr>`;
+  thead.innerHTML=h;
+
+  tbody.innerHTML="";
+  let jb=0,js=0;
+  const kb=Array(t.bulan.length).fill(0);
+
+  t.peserta.forEach((p,i)=>{
+    while(p.bayar.length<t.bulan.length)p.bayar.push(0);
+    p.bayar.length=t.bulan.length;
+    const yr=t.kadar[p.jenis]||0;
+    const s=yr*t.bulan.length;
+    let b=0;
+    p.bayar.forEach((v,bi)=>{b+=yr*v;kb[bi]+=yr*v;});
+    const baki=s-b;
+    jb+=b;js+=s;
+    if(q && !p.nama.toLowerCase().includes(q)) return;
+
+    const tr=document.createElement("tr");
+    let html=`<td>${i+1}</td>
+      <td class="name">${p.nama}</td>
+      <td><span class="tag ${p.jenis==="Dewasa"?"dewasa":"kanak"}">${p.jenis==="Dewasa"?"D":"K"}</span></td>
+      <td class="money">${yr}</td>`;
+    p.bayar.forEach((v,bi)=>{
+      const isSel=selectedCell && selectedCell.i===i && selectedCell.b===bi;
+      html+=`<td class="status ${isSel?'selected':''}" data-i="${i}" data-b="${bi}">${ikon(v)}</td>`;
+    });
+    html+=`<td class="money">${b}</td>
+      <td class="money">${s}</td>
+      <td class="${baki===0?'lunas':'baki'}">${baki}</td>
+      <td>
+        <button class="edit" onclick="event.stopPropagation();handleEditPeserta('${t.id}',${i},this)">✏️</button>
+        <button class="del" onclick="event.stopPropagation();handleDeletePeserta('${t.id}',${i},this)">🗑️</button>
+      </td>`;
+    tr.innerHTML=html;
+    tbody.appendChild(tr);
+  });
+
+  let f=`<tr><td colspan="4">JUMLAH</td>`;
+  kb.forEach(v=>f+=`<td class="money">${v?v:""}</td>`);
+  f+=`<td class="money">${jb}</td>
+      <td class="money">${js}</td>
+      <td class="baki">${js-jb}</td><td></td></tr>`;
+  tfoot.innerHTML=f;
+
+  document.getElementById("totalKutipan").textContent="RM"+jb;
+  document.getElementById("sasaran").textContent="RM"+js;
+  document.getElementById("bakiSemua").textContent="RM"+(js-jb);
+  document.getElementById("bilPeserta").textContent=t.peserta.length;
+
+  document.querySelectorAll(".status").forEach(td=>{
+    td.addEventListener("click",(e)=>{
+      e.stopPropagation();
+      const i=+td.dataset.i,b=+td.dataset.b;
+      if(selectedCell && selectedCell.i===i && selectedCell.b===b){
+        const s=t.peserta[i].bayar[b];
+        t.peserta[i].bayar[b]= s===1?0 : s===0?0.5 : 1;
+        selectedCell=null;
+        td.classList.add("pop");
+        save();
+        setTimeout(()=>renderTrip(),150);
+      }else{
+        selectedCell={i,b};
+        renderTrip();
+      }
+    });
+  });
+
+  document.body.onclick=(e)=>{
+    if(!e.target.classList.contains("status") && selectedCell && activeTripId){
+      selectedCell=null;
+      renderTrip();
+    }
+  };
+}
+
+function handleEditPeserta(tripId, index, btn){
+  const first=armButton("editPeserta",{tripId,index},btn);
+  if(first) openEditPeserta(tripId,index);
+  else toast("✏️ Klik sekali lagi untuk edit");
+}
+function openEditPeserta(tripId, index){
+  const t=data.trips.find(x=>x.id===tripId);
+  if(!t)return;
+  activeTripId=tripId;
+  editPesertaIndex=index;
+  document.getElementById("modalNamaTitle").textContent="✏️ Edit Peserta";
+  document.getElementById("inputNama").value=t.peserta[index].nama;
+  document.getElementById("inputJenis").value=t.peserta[index].jenis;
+  document.getElementById("modalNama").classList.add("show");
+  document.getElementById("inputNama").focus();
+}
+function handleDeletePeserta(tripId, index, btn){
+  const first=armDelete("peserta",{tripId,index},btn,()=>{
+    const t=data.trips.find(x=>x.id===tripId);
+    if(!t)return;
+    const p=t.peserta[index];
+    if(!p)return;
+    data.deletedPeserta.push({...p,_deletedAt:new Date().toISOString(),_tripId:tripId,_tripNama:t.nama,_originalIndex:index});
+    t.peserta.splice(index,1);
+    selectedCell=null;
+    save(); renderTrip();
+    toast("🗑️ "+p.nama+" ke Tong Sampah");
+  });
+  if(!first) toast("🗑️ Klik sekali lagi untuk padam");
+}
+
+/* ====== MODAL TRIP ====== */
+function bukaModalTrip(){
+  editTripId=null;
+  document.getElementById("modalTripTitle").textContent="➕ Trip Baru";
+  document.getElementById("inputTripNama").value="";
+  document.getElementById("inputTripTarikh").value="";
+  document.getElementById("inputTripDeadline").value="";
+  document.getElementById("inputKadarDewasa").value=30;
+  document.getElementById("inputKadarKanak").value=20;
+  document.getElementById("inputStatus").value="aktif";
+  const sel=document.getElementById("inputSalinDari");
+  sel.innerHTML='<option value="">— Tiada —</option>';
+  data.trips.forEach(t=>{sel.innerHTML+=`<option value="${t.id}">${t.nama} (${t.peserta.length} peserta)</option>`;});
+  document.getElementById("modalTrip").classList.add("show");
+  document.getElementById("inputTripNama").focus();
+}
+
+function bukaModalEditTrip(){
+  const t=getTrip();if(!t)return;
+  editTripId=t.id;
+  document.getElementById("modalTripTitle").textContent="⚙️ Edit Trip";
+  document.getElementById("inputTripNama").value=t.nama;
+  document.getElementById("inputTripTarikh").value=t.tarikh||"";
+  document.getElementById("inputTripDeadline").value=t.deadline||"";
+  document.getElementById("inputKadarDewasa").value=t.kadar.Dewasa;
+  document.getElementById("inputKadarKanak").value=t.kadar.Kanak2;
+  document.getElementById("inputStatus").value=t.status;
+  const sel=document.getElementById("inputSalinDari");
+  sel.innerHTML='<option value="">— Tiada —</option>';
+  data.trips.filter(x=>x.id!==t.id).forEach(x=>{sel.innerHTML+=`<option value="${x.id}">${x.nama} (${x.peserta.length} peserta)</option>`;});
+  document.getElementById("modalTrip").classList.add("show");
+}
+
+function simpanTrip(){
+  const nama=document.getElementById("inputTripNama").value.trim();
+  if(!nama){toast("Sila masukkan nama trip");return;}
+  const tarikh=document.getElementById("inputTripTarikh").value.trim();
+  const deadline=document.getElementById("inputTripDeadline").value;
+  const kD=+document.getElementById("inputKadarDewasa").value||30;
+  const kK=+document.getElementById("inputKadarKanak").value||20;
+  const status=document.getElementById("inputStatus").value;
+  const salin=document.getElementById("inputSalinDari").value;
+
+  if(deadline){
+    const today=new Date(); today.setHours(0,0,0,0);
+    const dl=new Date(deadline); dl.setHours(0,0,0,0);
+    if(dl<today && !editTripId){ toast("❌ Deadline tidak boleh tarikh lampau"); return; }
+    if(editTripId){
+      const t=data.trips.find(x=>x.id===editTripId);
+      if(t.deadline!==deadline && dl<today){ toast("❌ Deadline baru tidak boleh tarikh lampau"); return; }
+    }
+  }
+
+  if(editTripId){
+    const t=data.trips.find(x=>x.id===editTripId);
+    t.nama=nama;t.tarikh=tarikh;t.deadline=deadline;
+    t.kadar={Dewasa:kD, Kanak2:kK}; t.status=status;
+    toast("✏️ Trip dikemaskini");
+  }else{
+    const id="trip_"+Date.now();
+    let peserta=[];
+    if(salin){
+      const src=data.trips.find(x=>x.id===salin);
+      if(src){
+        const bl=["Jan","Feb","Mac","Apr","Mei","Jun"];
+        peserta=src.peserta.map(p=>({nama:p.nama,jenis:p.jenis,bayar:Array(bl.length).fill(0)}));
+      }
+    }
+    data.trips.push({id,nama,tarikh,deadline,kadar:{Dewasa:kD,Kanak2:kK},status,bulan:["Jan","Feb","Mac","Apr","Mei","Jun"],peserta});
+    toast("✅ Trip baru ditambah");
+  }
+  save();tutupModal("modalTrip");
+  if(activeTripId) renderTrip(); else renderLanding();
+}
+
+function padamTripById(id){
+  const t=data.trips.find(x=>x.id===id);
+  if(!t)return;
+  data.deletedTrips.push({...t,_deletedAt:new Date().toISOString()});
+  data.trips=data.trips.filter(x=>x.id!==id);
+  if(activeTripId===id) activeTripId=null;
+  save();
+  if(activeTripId) renderTrip(); else renderLanding();
+  toast("🗑️ "+t.nama+" ke Tong Sampah");
+}
+
+function padamBulan(bi){
+  const t=getTrip();if(!t)return;
+  const nama=t.bulan[bi];
+  confirmBox("Padam Bulan","Padam bulan \""+nama+"\"? Boleh dipulihkan dari Tong Sampah.",()=>{
+    const snap=t.peserta.map(p=>({nama:p.nama,nilai:p.bayar[bi]}));
+    data.deletedBulan.push({_deletedAt:new Date().toISOString(),_tripId:t.id,_tripNama:t.nama,bulan:nama,index:bi,pesertaSnapshot:snap});
+    t.bulan.splice(bi,1);
+    t.peserta.forEach(p=>p.bayar.splice(bi,1));
+    selectedCell=null;
+    save();renderTrip();
+    toast("🗑️ Bulan "+nama+" ke Tong Sampah");
+  });
+}
+
+function bukaModalNama(){
+  editPesertaIndex=-1;
+  document.getElementById("modalNamaTitle").textContent="➕ Tambah Peserta";
+  document.getElementById("inputNama").value="";
+  document.getElementById("inputJenis").value="Dewasa";
+  document.getElementById("modalNama").classList.add("show");
+  document.getElementById("inputNama").focus();
+}
+function simpanNama(){
+  const t=getTrip();if(!t)return;
+  const nama=document.getElementById("inputNama").value.trim();
+  if(!nama){toast("Sila masukkan nama");return;}
+  const jenis=document.getElementById("inputJenis").value;
+  const dup=t.peserta.some((p,idx)=>{
+    if(editPesertaIndex>=0 && idx===editPesertaIndex) return false;
+    return p.nama.toLowerCase()===nama.toLowerCase();
+  });
+  if(dup){toast("❌ Nama \""+nama+"\" sudah wujud");return;}
+  if(editPesertaIndex>=0){
+    t.peserta[editPesertaIndex].nama=nama;
+    t.peserta[editPesertaIndex].jenis=jenis;
+    toast("✏️ "+nama+" dikemaskini");
+  }else{
+    t.peserta.push({nama,jenis,bayar:Array(t.bulan.length).fill(0)});
+    toast("✅ "+nama+" ditambah");
+  }
+  save();renderTrip();tutupModal("modalNama");
+}
+
+function bukaModalBulan(){
+  document.getElementById("inputBulan").value="";
+  document.getElementById("modalBulan").classList.add("show");
+  document.getElementById("inputBulan").focus();
+}
+function simpanBulan(){
+  const t=getTrip();if(!t)return;
+  const nama=document.getElementById("inputBulan").value.trim();
+  if(!nama){toast("Sila masukkan nama bulan");return;}
+  if(t.bulan.includes(nama)){toast("Bulan sudah wujud");return;}
+  t.bulan.push(nama);
+  t.peserta.forEach(p=>p.bayar.push(0));
+  save();renderTrip();tutupModal("modalBulan");
+  toast("✅ Bulan "+nama+" ditambah");
+}
+
+/* ====== TONG SAMPAH ====== */
+function bukaTongSampah(){
+  renderTongSampah();
+  document.getElementById("modalTongSampah").classList.add("show");
+}
+function renderTongSampah(){
+  const list=document.getElementById("trashList");
+  list.innerHTML="";
+  const total=data.deletedTrips.length+data.deletedPeserta.length+data.deletedBulan.length;
+  if(total===0){
+    list.innerHTML=`<div style="text-align:center;padding:20px;opacity:.6;font-size:.85rem;">Tong sampah kosong 🎉</div>`;
+    return;
+  }
+  data.deletedTrips.forEach((t,idx)=>{
+    const when=t._deletedAt?new Date(t._deletedAt).toLocaleString("ms-MY"):"-";
+    const div=document.createElement("div");
+    div.className="trash-item";
+    div.innerHTML=`<div class="info"><b>🏝️ ${t.nama}</b><small>Trip · ${t.peserta?.length||0} peserta · ${when}</small></div>
+      <div class="actions"><button class="btn btn-green btn-sm" onclick="pulihTrip(${idx})">♻️ Pulih</button><button class="btn btn-danger btn-sm" onclick="padamKekal('trip',${idx})">🗑️ Kekal</button></div>`;
+    list.appendChild(div);
+  });
+  data.deletedPeserta.forEach((p,idx)=>{
+    const when=p._deletedAt?new Date(p._deletedAt).toLocaleString("ms-MY"):"-";
+    const div=document.createElement("div");
+    div.className="trash-item";
+    div.innerHTML=`<div class="info"><b>👤 ${p.nama} <span class="tag ${p.jenis==="Dewasa"?"dewasa":"kanak"}">${p.jenis==="Dewasa"?"D":"K"}</span></b><small>Dari ${p._tripNama||"?"} · ${when}</small></div>
+      <div class="actions"><button class="btn btn-green btn-sm" onclick="pulihPeserta(${idx})">♻️ Pulih</button><button class="btn btn-danger btn-sm" onclick="padamKekal('peserta',${idx})">🗑️ Kekal</button></div>`;
+    list.appendChild(div);
+  });
+  data.deletedBulan.forEach((b,idx)=>{
+    const when=b._deletedAt?new Date(b._deletedAt).toLocaleString("ms-MY"):"-";
+    const div=document.createElement("div");
+    div.className="trash-item";
+    div.innerHTML=`<div class="info"><b>📅 Bulan ${b.bulan}</b><small>Dari ${b._tripNama||"?"} · ${when}</small></div>
+      <div class="actions"><button class="btn btn-green btn-sm" onclick="pulihBulan(${idx})">♻️ Pulih</button><button class="btn btn-danger btn-sm" onclick="padamKekal('bulan',${idx})">🗑️ Kekal</button></div>`;
+    list.appendChild(div);
+  });
+}
+function pulihTrip(idx){
+  const t=data.deletedTrips[idx];if(!t)return;
+  const c={...t}; delete c._deletedAt;
+  data.trips.push(c); data.deletedTrips.splice(idx,1);
+  save();renderTongSampah();renderLanding();
+  toast("♻️ "+t.nama+" dipulihkan");
+}
+function pulihPeserta(idx){
+  const p=data.deletedPeserta[idx];if(!p)return;
+  const trip=data.trips.find(x=>x.id===p._tripId);
+  if(!trip){toast("❌ Trip asal tidak wujud");return;}
+  while(p.bayar.length<trip.bulan.length) p.bayar.push(0);
+  p.bayar.length=trip.bulan.length;
+  trip.peserta.push({nama:p.nama,jenis:p.jenis,bayar:p.bayar});
+  data.deletedPeserta.splice(idx,1);
+  save();renderTongSampah();
+  if(activeTripId===trip.id) renderTrip();
+  toast("♻️ "+p.nama+" dipulihkan");
+}
+function pulihBulan(idx){
+  const b=data.deletedBulan[idx];if(!b)return;
+  const trip=data.trips.find(x=>x.id===b._tripId);
+  if(!trip){toast("❌ Trip asal tidak wujud");return;}
+  if(trip.bulan.includes(b.bulan)){toast("❌ Bulan sudah wujud");return;}
+  const pos=Math.min(b.index,trip.bulan.length);
+  trip.bulan.splice(pos,0,b.bulan);
+  trip.peserta.forEach(p=>{
+    const snap=b.pesertaSnapshot?.find(s=>s.nama===p.nama);
+    p.bayar.splice(pos,0,snap?snap.nilai:0);
+  });
+  data.deletedBulan.splice(idx,1);
+  save();renderTongSampah();
+  if(activeTripId===trip.id) renderTrip();
+  toast("♻️ Bulan "+b.bulan+" dipulihkan");
+}
+function padamKekal(type,idx){
+  const lbl=type==="trip"?"trip":type==="peserta"?"peserta":"bulan";
+  confirmBox("Padam Kekal","Padam kekal "+lbl+" ini? Tidak boleh undo.",()=>{
+    if(type==="trip") data.deletedTrips.splice(idx,1);
+    else if(type==="peserta") data.deletedPeserta.splice(idx,1);
+    else data.deletedBulan.splice(idx,1);
+    save();renderTongSampah();
+    toast("🗑️ Dipadam kekal");
+  });
+}
+
+/* ====== EXPORT/BACKUP ====== */
+function exportCSV(){
+  const t=getTrip();if(!t)return;
+  let rows=[["No","Nama","Kategori","Yuran",...t.bulan,"Bayar","Sasaran","Baki"]];
+  t.peserta.forEach((p,i)=>{
+    const yr=t.kadar[p.jenis]||0;let b=0;
+    const st=p.bayar.map(v=>{b+=yr*v;return v===1?"Bayar":v===0.5?"Separa":"Belum";});
+    const s=yr*t.bulan.length;
+    rows.push([i+1,p.nama,p.jenis,yr,...st,b,s,s-b]);
+  });
+  const csv=rows.map(r=>r.map(c=>`"${c}"`).join(",")).join("\n");
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8;"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="rekod_"+t.id+".csv";a.click();
+  toast("📤 CSV dimuat turun");
+}
+function backupTrip(){
+  const t=getTrip();if(!t)return;
+  const blob=new Blob([JSON.stringify(t,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="trip_"+t.id+"_"+new Date().toISOString().slice(0,10)+".json";a.click();
+  toast("💾 Backup trip disimpan");
+}
+function backupAll(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+  a.download="triptracker_backup_"+new Date().toISOString().slice(0,10)+".json";a.click();
+  toast("💾 Backup disimpan");
+}
+function restoreAll(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{
+      const d=JSON.parse(r.result);
+      if(!d.trips) throw new Error();
+      data.trips=d.trips;
+      data.deletedTrips=d.deletedTrips||[];
+      data.deletedPeserta=d.deletedPeserta||[];
+      data.deletedBulan=d.deletedBulan||[];
+      save();renderLanding();
+      toast("📥 Data dipulihkan");
+    }catch(err){toast("❌ Fail tidak sah");}
+    e.target.value="";
+  };
+  r.readAsText(file);
+}
+
+/* ====== SUDOKU ====== */
+let sudokuPuzzle=[],sudokuSolution=[],sudokuSelected=null,sudokuTimer=null,sudokuStart=0;
+let sudokuBest=JSON.parse(localStorage.getItem("sudoku_best")||"{}");
+
+function mulaSudoku(){
+  const lvl=document.getElementById("sudokuLevel").value;
+  const {puzzle,solution}=generateSudoku(lvl);
+  sudokuPuzzle=puzzle.map(r=>[...r]);
+  sudokuSolution=solution;
+  sudokuSelected=null;
+  renderSudoku();
+  clearInterval(sudokuTimer);
+  sudokuStart=Date.now();
+  sudokuTimer=setInterval(()=>{
+    document.getElementById("sudokuTime").textContent=formatTime(Math.floor((Date.now()-sudokuStart)/1000));
+  },1000);
+  const best=sudokuBest[lvl];
+  document.getElementById("sudokuBest").textContent=best?formatTime(best):"-";
+}
+function generateSudoku(lvl){
+  const full=Array.from({length:9},()=>Array(9).fill(0));
+  function solve(){
+    for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+      if(full[r][c]===0){
+        const nums=[1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-0.5);
+        for(const n of nums){
+          if(valid(full,r,c,n)){full[r][c]=n;if(solve())return true;full[r][c]=0;}
+        }
+        return false;
+      }
+    }
+    return true;
+  }
+  function valid(g,r,c,n){
+    for(let i=0;i<9;i++){if(g[r][i]===n||g[i][c]===n)return false;}
+    const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;
+    for(let i=0;i<3;i++)for(let j=0;j<3;j++){if(g[br+i][bc+j]===n)return false;}
+    return true;
+  }
+  solve();
+  const solution=full.map(r=>[...r]);
+  const puzzle=full.map(r=>[...r]);
+  const holes={easy:40,medium:50,hard:58}[lvl]||40;
+  let removed=0;
+  while(removed<holes){
+    const r=Math.floor(Math.random()*9),c=Math.floor(Math.random()*9);
+    if(puzzle[r][c]!==0){puzzle[r][c]=0;removed++;}
+  }
+  return {puzzle,solution};
+}
+function renderSudoku(){
+  const board=document.getElementById("sudokuBoard");
+  board.innerHTML="";
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    const cell=document.createElement("div");
+    cell.className="sudoku-cell"+(sudokuPuzzle[r][c]!==0?" fixed":"");
+    cell.textContent=sudokuPuzzle[r][c]||"";
+    if(sudokuSelected && sudokuSelected.r===r && sudokuSelected.c===c) cell.classList.add("selected");
+    cell.onclick=()=>{
+      if(sudokuPuzzle[r][c]!==0)return;
+      sudokuSelected={r,c};
+      renderSudoku();
+    };
+    board.appendChild(cell);
+  }
+  const numpad=document.getElementById("sudokuNumpad");
+  numpad.innerHTML="";
+  for(let n=1;n<=9;n++){
+    const b=document.createElement("button");
+    b.className="sudoku-num";b.textContent=n;
+    b.onclick=()=>isiSudoku(n);
+    numpad.appendChild(b);
+  }
+}
+function isiSudoku(n){
+  if(!sudokuSelected)return;
+  const {r,c}=sudokuSelected;
+  if(sudokuPuzzle[r][c]!==0)return;
+  sudokuPuzzle[r][c]=n;
+  renderSudoku();
+  if(n!==sudokuSolution[r][c]){
+    const cells=document.querySelectorAll(".sudoku-cell");
+    cells[r*9+c].classList.add("error");
+    setTimeout(()=>{cells[r*9+c].classList.remove("error");},500);
+  }else checkSudokuSelesai();
+}
+function padamPilihan(){
+  if(!sudokuSelected)return;
+  const {r,c}=sudokuSelected;
+  if(sudokuPuzzle[r][c]!==0){sudokuPuzzle[r][c]=0;renderSudoku();}
+}
+function checkSudokuSelesai(){
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    if(sudokuPuzzle[r][c]!==sudokuSolution[r][c]) return;
+  }
+  clearInterval(sudokuTimer);
+  const s=Math.floor((Date.now()-sudokuStart)/1000);
+  const lvl=document.getElementById("sudokuLevel").value;
+  if(!sudokuBest[lvl]||s<sudokuBest[lvl]){
+    sudokuBest[lvl]=s;
+    localStorage.setItem("sudoku_best",JSON.stringify(sudokuBest));
+    document.getElementById("sudokuBest").textContent=formatTime(s);
+  }
+  toast("🎉 Sudoku selesai! Masa: "+formatTime(s));
+}
+function formatTime(s){
+  const m=Math.floor(s/60),sec=s%60;
+  return String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");
+}
+
+/* ====== MEMORY ====== */
+const memoryEmojis=["🐠","🐟","🐡","🦈","🐬","🐢","🦐","🐙","🦀","🐳","🦑","🐋","🌊","🏖️","🌴"];
+let memoryCards=[],memoryFlipped=[],memoryMatched=0,memoryMoves=0,memoryTimer=null,memoryStart=0,memoryLock=false;
+let memoryBest=null,memoryBestKey="memory_best_5",memoryPairs=10;
+
+function mulaMemory(){
+  const lvl=+(document.getElementById("memoryLevel").value||5);
+  memoryPairs={4:8,5:10,6:15}[lvl]||10;
+  const picked=memoryEmojis.slice(0,memoryPairs);
+  memoryCards=[...picked,...picked].sort(()=>Math.random()-0.5).map(e=>({emoji:e,flipped:false,matched:false}));
+  memoryFlipped=[];memoryMatched=0;memoryMoves=0;memoryLock=false;
+  document.getElementById("memoryMoves").textContent="0";
+  const cols=lvl===6?5:4;
+  document.getElementById("memoryBoard").style.gridTemplateColumns=`repeat(${cols},1fr)`;
+  renderMemory();
+  clearInterval(memoryTimer);
+  memoryStart=Date.now();
+  memoryTimer=setInterval(()=>{
+    document.getElementById("memoryTime").textContent=formatTime(Math.floor((Date.now()-memoryStart)/1000));
+  },1000);
+  memoryBestKey="memory_best_"+lvl;
+  memoryBest=JSON.parse(localStorage.getItem(memoryBestKey)||"null");
+  document.getElementById("memoryBest").textContent=memoryBest?(formatTime(memoryBest.time)+" / "+memoryBest.moves):"-";
+}
+function renderMemory(){
+  const board=document.getElementById("memoryBoard");
+  board.innerHTML="";
+  memoryCards.forEach((c,i)=>{
+    const card=document.createElement("div");
+    card.className="memory-card"+(c.flipped?" flipped":"")+(c.matched?" matched":"");
+    card.textContent=(c.flipped||c.matched)?c.emoji:"";
+    card.onclick=()=>flipMemory(i);
+    board.appendChild(card);
+  });
+}
+function flipMemory(i){
+  if(memoryLock)return;
+  const c=memoryCards[i];
+  if(c.flipped||c.matched)return;
+  c.flipped=true;
+  memoryFlipped.push(i);
+  memoryMoves++;
+  document.getElementById("memoryMoves").textContent=memoryMoves;
+  renderMemory();
+  if(memoryFlipped.length===2){
+    memoryLock=true;
+    const [a,b]=memoryFlipped;
+    if(memoryCards[a].emoji===memoryCards[b].emoji){
+      memoryCards[a].matched=true;memoryCards[b].matched=true;
+      memoryMatched++; memoryFlipped=[]; memoryLock=false;
+      renderMemory();
+      if(memoryMatched===memoryPairs){
+        clearInterval(memoryTimer);
+        const t=Math.floor((Date.now()-memoryStart)/1000);
+        if(!memoryBest||t<memoryBest.time){
+          memoryBest={time:t,moves:memoryMoves};
+          localStorage.setItem(memoryBestKey,JSON.stringify(memoryBest));
+          document.getElementById("memoryBest").textContent=formatTime(t)+" / "+memoryMoves;
+        }
+        toast("🎉 Memory selesai! "+formatTime(t)+" · "+memoryMoves);
+      }
+    }else{
+      setTimeout(()=>{
+        memoryCards[a].flipped=false;memoryCards[b].flipped=false;
+        memoryFlipped=[];memoryLock=false;
+        renderMemory();
+      },800);
+    }
+  }
+}
+
+/* ====== WORD SEARCH ====== */
+const wordBank=["IKAN","SHARK","KARANG","PASIR","LAUT","PULAU","SNORKEL","OMBAK","KAPAL","PANTAL","DUYUNG","KETAM","UDANG","SOTONG","PENYU","REDANG","TIOMAN","PERAHU","SELAM","TERUMBU"];
+let wordGrid=[],wordList=[],wordFound=[],wordSelected=[],wordTimer=null,wordStart=0;
+
+function mulaWord(){
+  const size=+(document.getElementById("wordLevel").value||10);
+  const wordCount={8:5,10:7,12:9}[size]||6;
+  const words=[...wordBank].sort(()=>Math.random()-0.5).slice(0,wordCount);
+  wordGrid=Array.from({length:size},()=>Array(size).fill(""));
+  wordFound=[];wordSelected=[];
+  const placedWords=[];
+  const dirs=[[0,1],[1,0],[1,1],[0,-1],[-1,0],[-1,-1],[1,-1],[-1,1]];
+  words.forEach(w=>{
+    let placed=false,tries=0;
+    while(!placed&&tries<100){
+      const dir=dirs[Math.floor(Math.random()*dirs.length)];
+      const r=Math.floor(Math.random()*size),c=Math.floor(Math.random()*size);
+      const endR=r+dir[0]*(w.length-1),endC=c+dir[1]*(w.length-1);
+      if(endR<0||endR>=size||endC<0||endC>=size){tries++;continue;}
+      let ok=true;
+      for(let i=0;i<w.length;i++){
+        const rr=r+dir[0]*i,cc=c+dir[1]*i;
+        if(wordGrid[rr][cc]&&wordGrid[rr][cc]!==w[i]){ok=false;break;}
+      }
+      if(ok){
+        for(let i=0;i<w.length;i++) wordGrid[r+dir[0]*i][c+dir[1]*i]=w[i];
+        placedWords.push({word:w,r,c,dr:dir[0],dc:dir[1]});
+        placed=true;
+      }
+      tries++;
+    }
+  });
+  const alpha="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  for(let r=0;r<size;r++)for(let c=0;c<size;c++){if(!wordGrid[r][c]) wordGrid[r][c]=alpha[Math.floor(Math.random()*26)];}
+  wordList=placedWords;
+  document.getElementById("wordTotal").textContent=words.length;
+  document.getElementById("wordFound").textContent="0";
+  const listEl=document.getElementById("wordList");
+  listEl.innerHTML="";
+  words.forEach(w=>{listEl.innerHTML+=`<span class="word-item" data-word="${w}">${w}</span>`;});
+  renderWord(size);
+  clearInterval(wordTimer);
+  wordStart=Date.now();
+  wordTimer=setInterval(()=>{
+    document.getElementById("wordTime").textContent=formatTime(Math.floor((Date.now()-wordStart)/1000));
+  },1000);
+}
+function renderWord(size){
+  const grid=document.getElementById("wordGrid");
+  grid.style.gridTemplateColumns=`repeat(${size},1fr)`;
+  grid.innerHTML="";
+  for(let r=0;r<size;r++)for(let c=0;c<size;c++){
+    const cell=document.createElement("div");
+    cell.className="word-cell";
+    cell.textContent=wordGrid[r][c];
+    const isFound=wordFound.some(w=>{
+      for(let i=0;i<w.word.length;i++){if(w.r+w.dr*i===r && w.c+w.dc*i===c) return true;}
+      return false;
+    });
+    if(isFound) cell.classList.add("found");
+    if(wordSelected.some(s=>s.r===r&&s.c===c)) cell.classList.add("selected");
+    cell.onclick=()=>pilihWord(r,c);
+    grid.appendChild(cell);
+  }
+}
+function pilihWord(r,c){
+  if(wordSelected.length===0) wordSelected=[{r,c}];
+  else if(wordSelected.length===1){
+    const start=wordSelected[0];
+    const dr=r-start.r,dc=c-start.c;
+    const len=Math.max(Math.abs(dr),Math.abs(dc))+1;
+    const sR=Math.sign(dr),sC=Math.sign(dc);
+    const cells=[];
+    for(let i=0;i<len;i++) cells.push({r:start.r+sR*i,c:start.c+sC*i});
+    const text=cells.map(x=>wordGrid[x.r]?.[x.c]||"").join("");
+    const rev=[...text].reverse().join("");
+    const match=wordList.find(w=>!wordFound.includes(w)&&(w.word===text||w.word===rev));
+    if(match){
+      wordFound.push(match);
+      document.getElementById("wordFound").textContent=wordFound.length;
+      document.querySelectorAll(".word-item").forEach(el=>{if(el.dataset.word===match.word) el.classList.add("found");});
+      if(wordFound.length===wordList.length){
+        clearInterval(wordTimer);
+        toast("🎉 Word Search selesai! "+formatTime(Math.floor((Date.now()-wordStart)/1000)));
+      }
+    }
+    wordSelected=[];
+  }
+  renderWord(wordGrid.length);
+}
+
+/* ====== REACTION ====== */
+let reactionState="idle",reactionStart=0,reactionTimeout=null,reactionBest=JSON.parse(localStorage.getItem("reaction_best")||"null");
+function resetReaction(){
+  clearTimeout(reactionTimeout);
+  reactionState="idle";
+  const box=document.getElementById("reactionBox");
+  box.className="reaction-box";
+  box.innerHTML=`<h2>⚡ Sedia?</h2><p>Klik kotak bila warna bertukar HIJAU</p>`;
+  document.getElementById("reactionTime").textContent="-";
+  document.getElementById("reactionBest").textContent=reactionBest?reactionBest+" ms":"-";
+}
+function reactionClick(){
+  const box=document.getElementById("reactionBox");
+  if(reactionState==="idle"){
+    reactionState="wait";
+    box.className="reaction-box wait";
+    box.innerHTML=`<h2>⏳ Tunggu...</h2><p>Jangan klik sampai warna hijau</p>`;
+    const delay=+(document.getElementById("reactionLevel").value||1800);
+    reactionTimeout=setTimeout(()=>{
+      if(reactionState!=="wait")return;
+      reactionState="go";
+      reactionStart=performance.now();
+      box.className="reaction-box go";
+      box.innerHTML=`<h2>🟢 KLIK!</h2><p>Sekarang!</p>`;
+    },delay);
+  }else if(reactionState==="wait"){
+    clearTimeout(reactionTimeout);
+    reactionState="idle";
+    box.className="reaction-box toosoon";
+    box.innerHTML=`<h2>❌ Terlalu awal!</h2><p>Klik untuk cuba lagi</p>`;
+    setTimeout(resetReaction,1500);
+  }else if(reactionState==="go"){
+    const ms=Math.round(performance.now()-reactionStart);
+    reactionState="idle";
+    box.className="reaction-box";
+    box.innerHTML=`<h2>⚡ ${ms} ms</h2><p>Klik untuk main lagi</p>`;
+    document.getElementById("reactionTime").textContent=ms+" ms";
+    if(!reactionBest||ms<reactionBest){
+      reactionBest=ms;
+      localStorage.setItem("reaction_best",JSON.stringify(reactionBest));
+      document.getElementById("reactionBest").textContent=ms+" ms";
+      toast("🏆 Rekod baru: "+ms+" ms!");
+    }
+  }
+}
+
+function tukarGame(g){
+  document.querySelectorAll(".game-tab").forEach(t=>t.classList.toggle("active",t.dataset.game===g));
+  document.getElementById("gameSudoku").style.display=g==="sudoku"?"block":"none";
+  document.getElementById("gameMemory").style.display=g==="memory"?"block":"none";
+  document.getElementById("gameWord").style.display=g==="word"?"block":"none";
+  document.getElementById("gameReaction").style.display=g==="reaction"?"block":"none";
+  if(g==="sudoku"&&sudokuPuzzle.length===0) mulaSudoku();
+  if(g==="memory"&&memoryCards.length===0) mulaMemory();
+  if(g==="word"&&wordGrid.length===0) mulaWord();
+  if(g==="reaction") resetReaction();
+}
+
+/* ====== PWA ====== */
+let deferredPrompt=null;
+window.addEventListener("beforeinstallprompt",(e)=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  const b=document.getElementById("btnInstall");
+  if(b) b.style.display="inline-flex";
+});
+window.addEventListener("appinstalled",()=>{
+  deferredPrompt=null;
+  const b=document.getElementById("btnInstall");
+  if(b) b.style.display="none";
+  toast("✅ Trip Tracker dipasang!");
+});
+async function installPwa(){
+  if(!deferredPrompt){toast("ℹ️ Guna menu browser: 'Add to Home Screen'");return;}
+  deferredPrompt.prompt();
+  const {outcome}=await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  const b=document.getElementById("btnInstall");
+  if(b) b.style.display="none";
+}
+if("serviceWorker" in navigator){
+  window.addEventListener("load",()=>{
+    navigator.serviceWorker.register("./sw.js").catch(err=>console.warn("SW error:",err));
+  });
+}
+
+/* ====== INIT ====== */
+applyGameState();
+initFirestore();
+mulaSudoku();
+mulaMemory();
+mulaWord();
+resetReaction();
+
+document.querySelectorAll(".modal").forEach(m=>{
+  m.addEventListener("click",e=>{if(e.target===m)m.classList.remove("show");});
+});
+</script>
+</body>
+</html>
